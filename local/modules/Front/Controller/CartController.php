@@ -60,27 +60,31 @@ class CartController extends BaseFrontController
 
             $this->afterModifyCart();
 
-
             if ($this->getRequest()->isXmlHttpRequest()) {
                 $this->changeViewForAjax();
             } elseif (null !== $response = $this->generateSuccessRedirect($cartAdd)) {
                 return $response;
             }
-
-        } catch (PropelException $e) {
+        } catch (FormValidationException $e) {
+            $message = $e->getMessage();
+        } catch (\Exception $e) {
             Tlog::getInstance()->error(sprintf("Failed to add item to cart with message : %s", $e->getMessage()));
             $message = $this->getTranslator()->trans(
                 "Failed to add this article to your cart, please try again",
                 [],
                 Front::MESSAGE_DOMAIN
             );
-        } catch (FormValidationException $e) {
-            $message = $e->getMessage();
         }
 
         if ($message) {
             $cartAdd->setErrorMessage($message);
             $this->getParserContext()->addForm($cartAdd);
+        }
+
+        if ($this->getRequest()->isXmlHttpRequest()) {
+            $this->changeViewForAjax();
+        } elseif (null !== $response = $this->generateErrorRedirect($cartAdd)) {
+            return $response;
         }
     }
 
@@ -98,14 +102,14 @@ class CartController extends BaseFrontController
             $this->dispatch(TheliaEvents::CART_UPDATEITEM, $cartEvent);
 
             $this->afterModifyCart();
-
-            if ($this->getRequest()->isXmlHttpRequest()) {
-                $this->changeViewForAjax();
-            }
         } catch (\Exception $e) {
             Tlog::getInstance()->error(sprintf("Failed to change cart item quantity: %s", $e->getMessage()));
 
             $this->getParserContext()->setGeneralError($e->getMessage());
+        }
+
+        if ($this->getRequest()->isXmlHttpRequest()) {
+            $this->changeViewForAjax();
         }
     }
 
