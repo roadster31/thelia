@@ -23,7 +23,6 @@
 namespace Front\Controller;
 
 use Front\Front;
-use Propel\Runtime\Exception\PropelException;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Thelia\Controller\Front\BaseFrontController;
@@ -59,12 +58,6 @@ class CartController extends BaseFrontController
             $this->getDispatcher()->dispatch(TheliaEvents::CART_ADDITEM, $cartEvent);
 
             $this->afterModifyCart();
-
-            if ($this->getRequest()->isXmlHttpRequest()) {
-                $this->changeViewForAjax();
-            } elseif (null !== $response = $this->generateSuccessRedirect($cartAdd)) {
-                return $response;
-            }
         } catch (FormValidationException $e) {
             $message = $e->getMessage();
         } catch (\Exception $e) {
@@ -86,6 +79,8 @@ class CartController extends BaseFrontController
         } elseif (null !== $response = $this->generateErrorRedirect($cartAdd)) {
             return $response;
         }
+
+        return null;
     }
 
     public function changeItem()
@@ -197,11 +192,11 @@ class CartController extends BaseFrontController
                 array(),
                 array(
                     'csrf_protection'   => false,
-                ),
-                $this->container
+                )
             );
         }
 
+        /** @var CartAdd $cartAdd */
         return $cartAdd;
     }
 
