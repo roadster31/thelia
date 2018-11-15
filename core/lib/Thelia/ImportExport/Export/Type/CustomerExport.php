@@ -14,14 +14,17 @@ namespace Thelia\ImportExport\Export\Type;
 
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\Join;
+use Propel\Runtime\ActiveQuery\ModelCriteria;
 use Thelia\ImportExport\Export\AbstractExport;
-use Thelia\Model\Currency;
 use Thelia\Model\CustomerQuery;
 use Thelia\Model\Map\AddressTableMap;
 use Thelia\Model\Map\CountryI18nTableMap;
 use Thelia\Model\Map\CustomerTableMap;
 use Thelia\Model\Map\NewsletterTableMap;
+use Thelia\Model\Order;
 use Thelia\Model\OrderQuery;
+use Thelia\Model\OrderStatusQuery;
+use Thelia\Tools\MoneyFormat;
 
 /**
  * Class CustomerExport
@@ -41,6 +44,7 @@ class CustomerExport extends AbstractExport
         CustomerTableMap::COL_DISCOUNT => 'discount',
         'newsletter_IS_REGISTRED' => 'is_registered_to_newsletter',
         CustomerTableMap::COL_CREATED_AT => 'sign_up_date',
+        'order_CURRENCY' => 'currency',
         'order_TOTAL' => 'total_orders',
         'last_order_AMOUNT' => 'last_order_amount',
         'last_order_DATE' => 'last_order_date',
@@ -59,6 +63,12 @@ class CustomerExport extends AbstractExport
         'address_CELLPHONE' => 'cellphone'
     ];
 
+    protected $currencyCache = [];
+
+    /**
+     * @return array|ModelCriteria
+     * @throws \Propel\Runtime\Exception\PropelException
+     */
     protected function getData()
     {
         $locale = $this->language->getLocale();
@@ -68,39 +78,38 @@ class CustomerExport extends AbstractExport
          */
         $newsletterJoin = new Join(CustomerTableMap::COL_EMAIL, NewsletterTableMap::COL_EMAIL, Criteria::LEFT_JOIN);
 
-        $query = new CustomerQuery;
-        $results = $query
+        $customersData = CustomerQuery::create()
             ->useCustomerTitleQuery('customer_title_')
-                ->useCustomerTitleI18nQuery('customer_title_i18n_')
-                    ->filterByLocale($locale)
-                    ->addAsColumn('title_TITLE', 'customer_title_i18n_.SHORT')
-                    ->endUse()
-                ->endUse()
+            ->useCustomerTitleI18nQuery('customer_title_i18n_')
+            ->filterByLocale($locale)
+            ->addAsColumn('title_TITLE', 'customer_title_i18n_.SHORT')
+            ->endUse()
+            ->endUse()
             ->useAddressQuery()
-                ->useCountryQuery()
-                    ->useCountryI18nQuery()
-                        ->filterByLocale($locale)
-                        ->addAsColumn('address_COUNTRY', CountryI18nTableMap::COL_TITLE)
-                        ->endUse()
-                    ->endUse()
-                    ->useCustomerTitleQuery('address_title')
-                    ->useCustomerTitleI18nQuery('address_title_i18n')
-                        ->filterByLocale($locale)
-                        ->addAsColumn('address_TITLE', 'address_title_i18n.SHORT')
-                    ->endUse()
-                ->endUse()
-                ->filterByIsDefault(true)
-                ->addAsColumn('address_LABEL', AddressTableMap::COL_LABEL)
-                ->addAsColumn('address_FIRST_NAME', AddressTableMap::COL_FIRSTNAME)
-                ->addAsColumn('address_LAST_NAME', AddressTableMap::COL_LASTNAME)
-                ->addAsColumn('address_COMPANY', AddressTableMap::COL_COMPANY)
-                ->addAsColumn('address_ADDRESS1', AddressTableMap::COL_ADDRESS1)
-                ->addAsColumn('address_ADDRESS2', AddressTableMap::COL_ADDRESS2)
-                ->addAsColumn('address_ADDRESS3', AddressTableMap::COL_ADDRESS3)
-                ->addAsColumn('address_ZIPCODE', AddressTableMap::COL_ZIPCODE)
-                ->addAsColumn('address_CITY', AddressTableMap::COL_CITY)
-                ->addAsColumn('address_PHONE', AddressTableMap::COL_PHONE)
-                ->addAsColumn('address_CELLPHONE', AddressTableMap::COL_CELLPHONE)
+            ->useCountryQuery()
+            ->useCountryI18nQuery()
+            ->filterByLocale($locale)
+            ->addAsColumn('address_COUNTRY', CountryI18nTableMap::COL_TITLE)
+            ->endUse()
+            ->endUse()
+            ->useCustomerTitleQuery('address_title')
+            ->useCustomerTitleI18nQuery('address_title_i18n')
+            ->filterByLocale($locale)
+            ->addAsColumn('address_TITLE', 'address_title_i18n.SHORT')
+            ->endUse()
+            ->endUse()
+            ->filterByIsDefault(true)
+            ->addAsColumn('address_LABEL', AddressTableMap::COL_LABEL)
+            ->addAsColumn('address_FIRST_NAME', AddressTableMap::COL_FIRSTNAME)
+            ->addAsColumn('address_LAST_NAME', AddressTableMap::COL_LASTNAME)
+            ->addAsColumn('address_COMPANY', AddressTableMap::COL_COMPANY)
+            ->addAsColumn('address_ADDRESS1', AddressTableMap::COL_ADDRESS1)
+            ->addAsColumn('address_ADDRESS2', AddressTableMap::COL_ADDRESS2)
+            ->addAsColumn('address_ADDRESS3', AddressTableMap::COL_ADDRESS3)
+            ->addAsColumn('address_ZIPCODE', AddressTableMap::COL_ZIPCODE)
+            ->addAsColumn('address_CITY', AddressTableMap::COL_CITY)
+            ->addAsColumn('address_PHONE', AddressTableMap::COL_PHONE)
+            ->addAsColumn('address_CELLPHONE', AddressTableMap::COL_CELLPHONE)
             ->endUse()
             ->addJoinObject($newsletterJoin)
             ->addAsColumn('newsletter_IS_REGISTRED', 'IF(NOT ISNULL('.NewsletterTableMap::COL_EMAIL.'),1,0)')
@@ -130,132 +139,90 @@ class CustomerExport extends AbstractExport
             ])
             ->orderById()
             ->find()
-            ->toArray()
         ;
-
-        /**
-         * Then get the orders
-         */
-        $orders = OrderQuery::create()
-            ->useCustomerQuery()
-                ->orderById()
-                ->endUse()
-            ->find()
-        ;
-
-        /**
-         * And add them info the array
-         */
-        $orders->rewind();
-
-        $arrayLength = count($results);
 
         $previousCustomerId = null;
 
-        for ($i = 0; $i < $arrayLength; ++$i) {
-            $currentCustomer = &$results[$i];
+        $moneyFormatter = MoneyFormat::getInstance($this->container->get('request_stack')->getCurrentRequest());
 
-            $currentCustomerId = $currentCustomer[CustomerTableMap::COL_ID];
-            unset($currentCustomer[CustomerTableMap::COL_ID]);
+        // Paid statuses list
+        $paidOrderStatusesId = OrderStatusQuery::getPaidStatusIdList();
 
-            if ($currentCustomerId === $previousCustomerId) {
-                $currentCustomer["title_TITLE"] = "";
-                $currentCustomer[CustomerTableMap::COL_LASTNAME] = "";
-                $currentCustomer[CustomerTableMap::COL_FIRSTNAME] = "";
-                $currentCustomer[CustomerTableMap::COL_EMAIL] = "";
-                $currentCustomer["address_COMPANY"] = "";
-                $currentCustomer["newsletter_IS_REGISTRED"] = "";
-                $currentCustomer[CustomerTableMap::COL_CREATED_AT] = "";
-                $currentCustomer[CustomerTableMap::COL_DISCOUNT] = "";
+        $results = [];
+
+        foreach ($customersData as $currentCustomer) {
+            // Reformat created_at date
+            $date = $currentCustomer[CustomerTableMap::COL_CREATED_AT];
+            $dateTime = new \DateTime($date);
+            $currentCustomer[CustomerTableMap::COL_CREATED_AT] = $dateTime->format($this->language->getDatetimeFormat());
+
+            // Then compute everything about the orders
+            $total = $amount = 0;
+
+            $lastOrder = null;
+
+            $orders = OrderQuery::create()
+                ->filterByCustomerId($currentCustomer[CustomerTableMap::COL_ID])
+                ->orderByInvoiceDate(Criteria::ASC)
+                ->useOrderStatusQuery()
+                ->filterById($paidOrderStatusesId)
+                ->endUse()
+                ->find();
+
+            $lastOrder = null;
+
+            /** @var \Thelia\Model\Order $currentOrder */
+            foreach ($orders as $currentOrder) {
+                $amount = $currentOrder->getTotalAmount($tax);
+
+                if (0 < $rate = $currentOrder->getCurrencyRate()) {
+                    $amount = round($amount / $rate, 2);
+                }
+
+                $total += $amount;
+
+                $lastOrder = $currentOrder;
+            }
+
+            if ($lastOrder !== null) {
+                $currentCustomer[] =
 
                 $currentCustomer += [
-                    "order_TOTAL" => "",
+                    "order_CURRENCY" => $this->getOrderCurrencyCode($currentOrder),
+                    "order_TOTAL" => $moneyFormatter->formatStandardMoney($total, 2),
+                    "last_order_AMOUNT" => $moneyFormatter->formatStandardMoney($amount, 2),
+                    "last_order_DATE" => $lastOrder->getInvoiceDate()->format($this->language->getDatetimeFormat()),
+                ];
+            } else {
+                $currentCustomer += [
+                    "order_CURRENCY" => '',
+                    "order_TOTAL" => $moneyFormatter->formatStandardMoney(0, 2),
                     "last_order_AMOUNT" => "",
                     "last_order_DATE" => "",
                 ];
-            } else {
-                /**
-                 * Reformat created_at date
-                 */
-                $date = $currentCustomer[CustomerTableMap::COL_CREATED_AT];
-                $dateTime = new \DateTime($date);
-                $currentCustomer[CustomerTableMap::COL_CREATED_AT] = $dateTime->format($this->language->getDatetimeFormat());
-
-                /**
-                 * Then compute everything about the orders
-                 */
-                $total = 0;
-                $lastOrderAmount = 0;
-                $lastOrderDate = null;
-                $lastOrder = null;
-                $lastOrderCurrencyCode = null;
-                $lastOrderId = 0;
-
-                $defaultCurrency = Currency::getDefaultCurrency();
-                $defaultCurrencyCode = $defaultCurrency
-                    ->getCode()
-                ;
-
-                if (empty($defaultCurrencyCode)) {
-                    $defaultCurrencyCode = $defaultCurrency
-                        ->getCode()
-                    ;
-                }
-
-                $formattedDate = null;
-
-                /** @var \Thelia\Model\Order $currentOrder */
-                while (false !== $currentOrder = $orders->current()) {
-                    if ($currentCustomerId != $currentOrder->getCustomerId()) {
-                        break;
-                    }
-
-                    $amount = $currentOrder->getTotalAmount($tax);
-                    if (0 < $rate = $currentOrder->getCurrencyRate()) {
-                        $amount = round($amount / $rate, 2);
-                    }
-
-                    $total += $amount;
-
-                    /** @var \DateTime $date */
-                    $date = $currentOrder->getCreatedAt();
-
-                    if (null === $lastOrderDate || ($date >= $lastOrderDate && $lastOrderId < $currentOrder->getId())) {
-                        $lastOrder = $currentOrder;
-                        $lastOrderDate = $date;
-                        $lastOrderId = $currentOrder->getId();
-                    }
-
-                    $orders->next();
-                }
-
-                if ($lastOrderDate !== null) {
-                    $formattedDate = $lastOrderDate->format($this->language->getDatetimeFormat());
-
-                    $orderCurrency = $lastOrder->getCurrency();
-                    $lastOrderCurrencyCode = $orderCurrency
-                        ->getCode()
-                    ;
-
-                    if (empty($lastOrderCurrencyCode)) {
-                        $lastOrderCurrencyCode = $orderCurrency
-                            ->getCode()
-                        ;
-                    }
-
-                    $lastOrderAmount = $lastOrder->getTotalAmount($tax_);
-                }
-
-                $currentCustomer += [
-                    "order_TOTAL" => $total . " " . $defaultCurrencyCode,
-                    "last_order_AMOUNT" => $lastOrderAmount === 0 ? "" : $lastOrderAmount . " " . $lastOrderCurrencyCode,
-                    "last_order_DATE" => $formattedDate,
-                ];
             }
 
-            $previousCustomerId = $currentCustomerId;
+            $results[] = $currentCustomer;
         }
 
         return $results;
+    }
+
+    /**
+     * @param Order $order
+     * @return mixed
+     * @throws \Propel\Runtime\Exception\PropelException
+     */
+    protected function getOrderCurrencyCode(Order $order)
+    {
+        if (! isset($this->currencyCache[$order->getCurrencyId()])) {
+            if (null !== $currency = $order->getCurrency()) {
+                $this->currencyCache[$currency->getId()] = $currency->getCode();
+            } else {
+                $this->currencyCache[$order->getCurrencyId()] = '???';
+            }
+        }
+
+        return $this->currencyCache[$order->getCurrencyId()];
     }
 }

@@ -84,6 +84,10 @@ class OrderExport extends AbstractExport
         'tax_TITLE' => 'tax_title'
     ];
 
+    /**
+     * @return array|mixed|Order
+     * @throws \Propel\Runtime\Exception\PropelException
+     */
     public function current()
     {
         do {
