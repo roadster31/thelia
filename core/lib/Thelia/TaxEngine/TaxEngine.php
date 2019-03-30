@@ -122,15 +122,15 @@ class TaxEngine
             /** @var Customer $customer */
             if (null !== $customer = $this->getSession()->getCustomerUser()) {
                 if (null !== $this->getSession()->getOrder()
-                        && null !== $this->getSession()->getOrder()->getChoosenDeliveryAddress()
-                        && null !== $currentDeliveryAddress = AddressQuery::create()->findPk($this->getSession()->getOrder()->getChoosenDeliveryAddress())) {
+                    && null !== $this->getSession()->getOrder()->getChoosenDeliveryAddress()
+                    && null !== $currentDeliveryAddress = AddressQuery::create()->findPk($this->getSession()->getOrder()->getChoosenDeliveryAddress())) {
                     $this->taxCountry = $currentDeliveryAddress->getCountry();
                     $this->taxState = $currentDeliveryAddress->getState();
                 } else {
                     $customerDefaultAddress = $customer->getDefaultAddress();
                     if (isset($customerDefaultAddress)) {
-                      $this->taxCountry = $customerDefaultAddress->getCountry();
-                      $this->taxState = $customerDefaultAddress->getState();
+                        $this->taxCountry = $customerDefaultAddress->getCountry();
+                        $this->taxState = $customerDefaultAddress->getState();
                     }
                 }
             }

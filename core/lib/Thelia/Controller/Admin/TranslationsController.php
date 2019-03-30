@@ -92,7 +92,6 @@ class TranslationsController extends BaseAdminController
 
         if (! empty($itemName) || $itemToTranslate == 'co' || $itemToTranslate == 'in' || $itemToTranslate == 'wi') {
             switch ($itemToTranslate) {
-
                 // Module core
                 case 'mo':
                     $module = $this->getModule($itemName);

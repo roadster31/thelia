@@ -11,6 +11,7 @@
 /*************************************************************************************/
 
 namespace Thelia\Core\Template\Validator;
+
 use Thelia\Core\Template\TemplateDefinition;
 
 /**

@@ -40,13 +40,13 @@ class MoneyFormat extends NumberFormat
         $decimals = null,
         $decPoint = null,
         $thousandsSep = null,
-        $symbol = null, 
+        $symbol = null,
         $remove_zero_decimal = false
     ) {
         $number = parent::format($number, $decimals, $decPoint, $thousandsSep);
-        
+
         if ($remove_zero_decimal === true) {
-            if($number == (int)$number) {
+            if ($number == (int)$number) {
                 $number = \intval($number);
             }
         }
@@ -73,13 +73,13 @@ class MoneyFormat extends NumberFormat
         $decimals = null,
         $decPoint = null,
         $thousandsSep = null,
-        $currencyId = null, 
+        $currencyId = null,
         $remove_zero_decimal = false
     ) {
         $number = parent::format($number, $decimals, $decPoint, $thousandsSep);
-        
+
         if ($remove_zero_decimal === true) {
-            if($number == (int)$number) {
+            if ($number == (int)$number) {
                 $number = \intval($number);
             }
         }

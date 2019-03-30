@@ -107,5 +107,4 @@ interface UserInterface
      * @return string the locale
      */
     public function getLocale();
-
 }

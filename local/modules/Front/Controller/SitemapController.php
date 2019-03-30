@@ -18,6 +18,7 @@ use Thelia\Controller\Front\BaseFrontController;
 use Thelia\Core\HttpFoundation\Request;
 use Thelia\Core\HttpFoundation\Response;
 use Thelia\Model\ConfigQuery;
+use Thelia\Model\Lang;
 use Thelia\Model\LangQuery;
 
 /**
@@ -36,9 +37,8 @@ use Thelia\Model\LangQuery;
  * @package Front\Controller
  * @author Julien Chanséaume <jchanseaume@openstudio.fr>
  */
-class SitemapController extends BaseFrontController {
-
-
+class SitemapController extends BaseFrontController
+{
     /**
      * Folder name for sitemap cache
      */
@@ -60,13 +60,13 @@ class SitemapController extends BaseFrontController {
         // the locale : fr, en,
         $lang = $request->query->get("lang", "");
         if ("" !== $lang) {
-            if (! $this->checkLang($lang)){
+            if (! $this->checkLang($lang)) {
                 $this->pageNotFound();
             }
         }
         // specific content : product, category, cms
         $context = $request->query->get("context", "");
-        if (! in_array($context, array("", "catalog", "content")) ){
+        if (! in_array($context, array("", "catalog", "content"))) {
             $this->pageNotFound();
         }
 
@@ -129,7 +129,8 @@ class SitemapController extends BaseFrontController {
      *
      * @return bool
      */
-    protected function checkAdmin(){
+    protected function checkAdmin()
+    {
         return $this->getSecurityContext()->hasAdminUser();
     }
 
@@ -137,7 +138,7 @@ class SitemapController extends BaseFrontController {
     /**
      * Check if a lang is used
      *
-     * @param $lang The lang code. e.g.: fr
+     * @param Lang $lang lang code. e.g.: fr
      * @return bool true if the language is used, otherwise false
      */
     private function checkLang($lang)
@@ -148,5 +149,4 @@ class SitemapController extends BaseFrontController {
 
         return (null !== $lang);
     }
-
 }

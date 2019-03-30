@@ -457,8 +457,8 @@ class Image extends BaseI18nLoop implements PropelSearchLoopInterface
             ->set("HAS_PREVIOUS", 0)
             ->set("HAS_NEXT", 0);
     }
-    
-    private function toBase64($path) 
+
+    private function toBase64($path)
     {
         $imgData = base64_encode(file_get_contents($path));
         return $src = 'data: '.mime_content_type($path).';base64,'.$imgData;

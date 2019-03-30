@@ -1,7 +1,7 @@
 <?php
 /*************************************************************************************/
 /*                                                                                   */
-/*      Thelia	                                                                     */
+/*      Thelia                                                                       */
 /*                                                                                   */
 /*      Copyright (c) OpenStudio                                                     */
 /*      email : info@thelia.net                                                      */
@@ -17,7 +17,7 @@
 /*      GNU General Public License for more details.                                 */
 /*                                                                                   */
 /*      You should have received a copy of the GNU General Public License            */
-/*	    along with this program. If not, see <http://www.gnu.org/licenses/>.         */
+/*      along with this program. If not, see <http://www.gnu.org/licenses/>.         */
 /*                                                                                   */
 /*************************************************************************************/
 
@@ -44,7 +44,7 @@ class ContactController extends BaseFrontController
     public function sendAction()
     {
         $contactForm = $this->createForm(FrontForm::CONTACT);
-        
+
         try {
             $form = $this->validateForm($contactForm);
 
@@ -66,22 +66,21 @@ class ContactController extends BaseFrontController
             if ($contactForm->hasSuccessUrl()) {
                 return $this->generateSuccessRedirect($contactForm);
             }
-            
+
             return $this->generateRedirectFromRoute('contact.success');
-            
         } catch (FormValidationException $e) {
             $error_message = $e->getMessage();
         }
-        
+
         Tlog::getInstance()->error(sprintf('Error during sending contact mail : %s', $error_message));
-        
+
         $contactForm->setErrorMessage($error_message);
-        
+
         $this->getParserContext()
             ->addForm($contactForm)
             ->setGeneralError($error_message)
         ;
-        
+
         // Redirect to error URL if defined
         if ($contactForm->hasErrorUrl()) {
             return $this->generateErrorRedirect($contactForm);

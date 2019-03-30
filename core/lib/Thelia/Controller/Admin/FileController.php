@@ -783,14 +783,14 @@ class FileController extends BaseAdminController
         );
     }
 
-    public function updateImagePositionAction($parentType, /** @noinspection PhpUnusedParameterInspection */  $parentId)
+    public function updateImagePositionAction($parentType, /** @noinspection PhpUnusedParameterInspection */ $parentId)
     {
         $imageId = $this->getRequest()->request->get('image_id');
 
         return $this->updateFilePositionAction($parentType, $imageId, 'image', TheliaEvents::IMAGE_UPDATE_POSITION);
     }
 
-    public function updateDocumentPositionAction($parentType, /** @noinspection PhpUnusedParameterInspection */  $parentId)
+    public function updateDocumentPositionAction($parentType, /** @noinspection PhpUnusedParameterInspection */ $parentId)
     {
         $documentId = $this->getRequest()->request->get('document_id');
 

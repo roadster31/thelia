@@ -87,6 +87,7 @@ class Product extends BaseAction implements EventSubscriberInterface
      * Create a new product entry
      *
      * @param \Thelia\Core\Event\Product\ProductCreateEvent $event
+     * @throws \Exception
      */
     public function create(ProductCreateEvent $event)
     {
@@ -178,6 +179,11 @@ class Product extends BaseAction implements EventSubscriberInterface
         }
     }
 
+    /**
+     * @param ProductCloneEvent $event
+     * @param ProductI18n $originalProductDefaultI18n
+     * @param ProductPrice $originalProductDefaultPrice
+     */
     public function createClone(ProductCloneEvent $event, ProductI18n $originalProductDefaultI18n, ProductPrice $originalProductDefaultPrice)
     {
         // Build event and dispatch creation of the clone product
@@ -199,6 +205,10 @@ class Product extends BaseAction implements EventSubscriberInterface
         $event->setClonedProduct($createCloneEvent->getProduct());
     }
 
+    /**
+     * @param ProductCloneEvent $event
+     * @param ProductPrice $originalProductDefaultPrice
+     */
     public function updateClone(ProductCloneEvent $event, ProductPrice $originalProductDefaultPrice)
     {
         // Get original product's I18ns
@@ -251,6 +261,9 @@ class Product extends BaseAction implements EventSubscriberInterface
         $this->eventDispatcher->dispatch(TheliaEvents::PRODUCT_SET_TEMPLATE, $clonedProductUpdateTemplateEvent);
     }
 
+    /**
+     * @param ProductCloneEvent $event
+     */
     public function cloneFeatureCombination(ProductCloneEvent $event)
     {
         // Get original product FeatureProduct list
@@ -285,6 +298,9 @@ class Product extends BaseAction implements EventSubscriberInterface
         }
     }
 
+    /**
+     * @param ProductCloneEvent $event
+     */
     public function cloneAssociatedContent(ProductCloneEvent $event)
     {
         // Get original product associated contents
@@ -299,6 +315,9 @@ class Product extends BaseAction implements EventSubscriberInterface
         }
     }
 
+    /**
+     * @param ProductCloneEvent $event
+     */
     public function cloneAccessories(ProductCloneEvent $event)
     {
         // Get original product accessories
@@ -313,6 +332,9 @@ class Product extends BaseAction implements EventSubscriberInterface
         }
     }
 
+    /**
+     * @param ProductCloneEvent $event
+     */
     public function cloneAdditionalCategories(ProductCloneEvent $event)
     {
         // Get original product additional categories
@@ -447,6 +469,7 @@ class Product extends BaseAction implements EventSubscriberInterface
      * Toggle product visibility. No form used here
      *
      * @param ProductToggleVisibilityEvent $event
+     * @throws PropelException
      */
     public function toggleVisibility(ProductToggleVisibilityEvent $event)
     {
@@ -479,6 +502,10 @@ class Product extends BaseAction implements EventSubscriberInterface
         );
     }
 
+    /**
+     * @param ProductAddContentEvent $event
+     * @throws PropelException
+     */
     public function addContent(ProductAddContentEvent $event)
     {
         if (ProductAssociatedContentQuery::create()
@@ -495,6 +522,10 @@ class Product extends BaseAction implements EventSubscriberInterface
         }
     }
 
+    /**
+     * @param ProductDeleteContentEvent $event
+     * @throws PropelException
+     */
     public function removeContent(ProductDeleteContentEvent $event)
     {
         $content = ProductAssociatedContentQuery::create()
@@ -510,6 +541,10 @@ class Product extends BaseAction implements EventSubscriberInterface
         }
     }
 
+    /**
+     * @param ProductAddCategoryEvent $event
+     * @throws PropelException
+     */
     public function addCategory(ProductAddCategoryEvent $event)
     {
         if (ProductCategoryQuery::create()
@@ -527,6 +562,10 @@ class Product extends BaseAction implements EventSubscriberInterface
         }
     }
 
+    /**
+     * @param ProductDeleteCategoryEvent $event
+     * @throws PropelException
+     */
     public function removeCategory(ProductDeleteCategoryEvent $event)
     {
         $productCategory = ProductCategoryQuery::create()
@@ -539,6 +578,10 @@ class Product extends BaseAction implements EventSubscriberInterface
         }
     }
 
+    /**
+     * @param ProductAddAccessoryEvent $event
+     * @throws PropelException
+     */
     public function addAccessory(ProductAddAccessoryEvent $event)
     {
         if (AccessoryQuery::create()
@@ -555,6 +598,10 @@ class Product extends BaseAction implements EventSubscriberInterface
         }
     }
 
+    /**
+     * @param ProductDeleteAccessoryEvent $event
+     * @throws PropelException
+     */
     public function removeAccessory(ProductDeleteAccessoryEvent $event)
     {
         $accessory = AccessoryQuery::create()
@@ -570,6 +617,10 @@ class Product extends BaseAction implements EventSubscriberInterface
         }
     }
 
+    /**
+     * @param ProductSetTemplateEvent $event
+     * @throws \Exception
+     */
     public function setProductTemplate(ProductSetTemplateEvent $event)
     {
         $con = Propel::getWriteConnection(ProductTableMap::DATABASE_NAME);
@@ -582,23 +633,23 @@ class Product extends BaseAction implements EventSubscriberInterface
             // Check differences between current coobination and the next one, and clear obsoletes values.
             $nextTemplateId = $event->getTemplateId();
             $currentTemplateId = $product->getTemplateId();
-                
+
             // 1. Process product features.
-            
+
             $currentFeatures = FeatureTemplateQuery::create()
                 ->filterByTemplateId($currentTemplateId)
                 ->select([ FeatureTemplateTableMap::COL_FEATURE_ID ])
                 ->find($con);
-    
+
             $nextFeatures = FeatureTemplateQuery::create()
                 ->filterByTemplateId($nextTemplateId)
                 ->select([ FeatureTemplateTableMap::COL_FEATURE_ID ])
                 ->find($con);
-            
+
             // Find features values we shoud delete. To do this, we have to
             // find all features in $currentFeatures that are not present in $nextFeatures
             $featuresToDelete = array_diff($currentFeatures->getData(), $nextFeatures->getData());
-    
+
             // Delete obsolete features values
             foreach ($featuresToDelete as $featureId) {
                 $this->eventDispatcher->dispatch(
@@ -606,19 +657,19 @@ class Product extends BaseAction implements EventSubscriberInterface
                     new FeatureProductDeleteEvent($product->getId(), $featureId)
                 );
             }
-            
+
             // 2. Process product Attributes
-            
+
             $currentAttributes = AttributeTemplateQuery::create()
                 ->filterByTemplateId($currentTemplateId)
                 ->select([ AttributeTemplateTableMap::COL_ATTRIBUTE_ID ])
                 ->find($con);
-    
+
             $nextAttributes = AttributeTemplateQuery::create()
                 ->filterByTemplateId($nextTemplateId)
                 ->select([ AttributeTemplateTableMap::COL_ATTRIBUTE_ID ])
                 ->find($con);
-            
+
             // Find attributes values we shoud delete. To do this, we have to
             // find all attributes in $currentAttributes that are not present in $nextAttributes
             $attributesToDelete = array_diff($currentAttributes->getData(), $nextAttributes->getData());
@@ -631,7 +682,7 @@ class Product extends BaseAction implements EventSubscriberInterface
                 ->endUse()
                 ->select([ ProductSaleElementsTableMap::COL_ID ])
                 ->find();
-    
+
             // Delete obsolete PSEs
             foreach ($pseToDelete->getData() as $pseId) {
                 $this->eventDispatcher->dispatch(
@@ -665,7 +716,7 @@ class Product extends BaseAction implements EventSubscriberInterface
             throw $ex;
         }
     }
-    
+
     /**
      * Changes accessry position, selecting absolute ou relative change.
      *
@@ -696,6 +747,7 @@ class Product extends BaseAction implements EventSubscriberInterface
      * Update the value of a product feature.
      *
      * @param FeatureProductUpdateEvent $event
+     * @throws PropelException
      */
     public function updateFeatureProductValue(FeatureProductUpdateEvent $event)
     {
@@ -738,8 +790,8 @@ class Product extends BaseAction implements EventSubscriberInterface
 
                 $featureAvId = $createFeatureAvEvent->getFeatureAv()->getId();
             }
-        } // Else if the FeatureProduct exists and is a free text value
-        elseif ($featureProduct !== null && $event->getIsTextValue() === true) {
+        } elseif ($featureProduct !== null && $event->getIsTextValue() === true) {
+            // The FeatureProduct exists and is a free text value
             // Get the FeatureAv
             $freeTextFeatureAv = FeatureAvQuery::create()
                 ->filterByFeatureProduct($featureProduct)
@@ -760,8 +812,8 @@ class Product extends BaseAction implements EventSubscriberInterface
                     ->save();
 
                 $featureAvId = $featureAvI18n->getId();
-            } // Else if i18n exists but new value is empty : delete FeatureAvI18n
-            elseif ($freeTextFeatureAvI18n !== null && empty($featureAvId)) {
+            } elseif ($freeTextFeatureAvI18n !== null && empty($featureAvId)) {
+                // i18n exists but new value is empty : delete FeatureAvI18n
                 $freeTextFeatureAvI18n->delete();
 
                 // Check if there are still some FeatureAvI18n for this FeatureAv
@@ -777,14 +829,14 @@ class Product extends BaseAction implements EventSubscriberInterface
                     $this->eventDispatcher->dispatch(TheliaEvents::FEATURE_AV_DELETE, $deleteFeatureAvEvent);
                 }
                 return;
-            } // Else if a FeatureAvI18n is found and the new value is not empty : update existing FeatureAvI18n
-            elseif ($freeTextFeatureAvI18n !== null && !empty($featureAvId)) {
+            } elseif ($freeTextFeatureAvI18n !== null && !empty($featureAvId)) {
+                // a FeatureAvI18n is found and the new value is not empty : update existing FeatureAvI18n
                 $freeTextFeatureAvI18n->setTitle($featureAvId);
                 $freeTextFeatureAvI18n->save();
 
                 $featureAvId = $freeTextFeatureAvI18n->getId();
-            } //To prevent Integrity constraint violation
-            elseif (empty($featureAvId)) {
+            } elseif (empty($featureAvId)) {
+                //To prevent Integrity constraint violation
                 return;
             }
         }
@@ -800,6 +852,7 @@ class Product extends BaseAction implements EventSubscriberInterface
      * Delete a product feature value
      *
      * @param FeatureProductDeleteEvent $event
+     * @throws PropelException
      */
     public function deleteFeatureProductValue(FeatureProductDeleteEvent $event)
     {
@@ -810,6 +863,10 @@ class Product extends BaseAction implements EventSubscriberInterface
         ;
     }
 
+    /**
+     * @param FileDeleteEvent $event
+     * @throws PropelException
+     */
     public function deleteImagePSEAssociations(FileDeleteEvent $event)
     {
         $model = $event->getFileToDelete();
@@ -819,6 +876,10 @@ class Product extends BaseAction implements EventSubscriberInterface
         }
     }
 
+    /**
+     * @param FileDeleteEvent $event
+     * @throws PropelException
+     */
     public function deleteDocumentPSEAssociations(FileDeleteEvent $event)
     {
         $model = $event->getFileToDelete();
@@ -827,7 +888,7 @@ class Product extends BaseAction implements EventSubscriberInterface
             $model->getProductSaleElementsProductDocuments()->delete();
         }
     }
-    
+
     /**
      * When a feature is removed from a template, the products which are using this feature should be updated.
      *
@@ -842,7 +903,7 @@ class Product extends BaseAction implements EventSubscriberInterface
             ->filterByTemplateId($event->getTemplate()->getId())
             ->find()
         ;
-        
+
         foreach ($products as $product) {
             $dispatcher->dispatch(
                 TheliaEvents::PRODUCT_FEATURE_DELETE_VALUE,
@@ -850,7 +911,7 @@ class Product extends BaseAction implements EventSubscriberInterface
             );
         }
     }
-    
+
     /**
      * When an attribute is removed from a template, the conbinations and PSE of products which are using this template
      * should be updated.
@@ -858,6 +919,7 @@ class Product extends BaseAction implements EventSubscriberInterface
      * @param TemplateDeleteAttributeEvent $event
      * @param string $eventName
      * @param EventDispatcherInterface $dispatcher
+     * @throws PropelException
      */
     public function deleteTemplateAttribute(TemplateDeleteAttributeEvent $event, $eventName, EventDispatcherInterface $dispatcher)
     {
@@ -871,9 +933,9 @@ class Product extends BaseAction implements EventSubscriberInterface
             ->endUse()
             ->select([ ProductSaleElementsTableMap::COL_ID ])
             ->find();
-    
+
         $currencyId = CurrencyModel::getDefaultCurrency()->getId();
-        
+
         foreach ($pseToDelete->getData() as $pseId) {
             $dispatcher->dispatch(
                 TheliaEvents::PRODUCT_DELETE_PRODUCT_SALE_ELEMENT,
@@ -945,10 +1007,10 @@ class Product extends BaseAction implements EventSubscriberInterface
 
             TheliaEvents::PRODUCT_FEATURE_UPDATE_VALUE      => array("updateFeatureProductValue", 128),
             TheliaEvents::PRODUCT_FEATURE_DELETE_VALUE      => array("deleteFeatureProductValue", 128),
-            
+
             TheliaEvents::TEMPLATE_DELETE_ATTRIBUTE         => array("deleteTemplateAttribute", 128),
             TheliaEvents::TEMPLATE_DELETE_FEATURE           => array("deleteTemplateFeature", 128),
-    
+
             // Those two have to be executed before
             TheliaEvents::IMAGE_DELETE                      => array("deleteImagePSEAssociations", 192),
             TheliaEvents::DOCUMENT_DELETE                   => array("deleteDocumentPSEAssociations", 192),

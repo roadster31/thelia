@@ -33,9 +33,8 @@ use Thelia\Model\LangQuery;
  * @package Front\Controller
  * @author Julien Chanséaume <jchanseaume@openstudio.fr>
  */
-class FeedController extends BaseFrontController {
-
-
+class FeedController extends BaseFrontController
+{
     /**
      * Folder name for feeds cache
      */
@@ -64,34 +63,34 @@ class FeedController extends BaseFrontController {
         $request = $this->getRequest();
 
         // context
-        if ("" === $context){
+        if ("" === $context) {
             $context = "catalog";
-        } else if (! in_array($context, array("catalog", "content", "brand")) ){
+        } else if (! in_array($context, array("catalog", "content", "brand"))) {
             $this->pageNotFound();
         }
 
         // the locale : fr_FR, en_US,
         if ("" !== $lang) {
-            if (! $this->checkLang($lang)){
+            if (! $this->checkLang($lang)) {
                 $this->pageNotFound();
             }
         } else {
-            try{
+            try {
                 $lang = Lang::getDefaultLanguage();
                 $lang = $lang->getLocale();
-            } catch (\RuntimeException $ex){
+            } catch (\RuntimeException $ex) {
                 // @todo generate error page
                 throw new \RuntimeException("No default language is defined. Please define one.");
             }
         }
-        if (null === $lang = LangQuery::create()->findOneByLocale($lang)){
+        if (null === $lang = LangQuery::create()->findOneByLocale($lang)) {
             $this->pageNotFound();
         }
         $lang = $lang->getId();
 
         // check if element exists and is visible
-        if ("" !== $id){
-            if (false === $this->checkId($context, $id)){
+        if ("" !== $id) {
+            if (false === $this->checkId($context, $id)) {
                 $this->pageNotFound();
             }
         }
@@ -106,14 +105,14 @@ class FeedController extends BaseFrontController {
         $cacheExpire = intval(ConfigQuery::read("feed_ttl", '7200')) ?: 7200;
 
         $cacheDriver = new FilesystemCache($cacheDir);
-        if (!($this->checkAdmin() && "" !== $flush)){
+        if (!($this->checkAdmin() && "" !== $flush)) {
             $cacheContent = $cacheDriver->fetch($cacheKey);
         } else {
             $cacheDriver->delete($cacheKey);
         }
 
         // if not in cache
-        if (false === $cacheContent){
+        if (false === $cacheContent) {
             // render the view
             $cacheContent = $this->renderRaw(
                 "feed",
@@ -154,7 +153,8 @@ class FeedController extends BaseFrontController {
      *
      * @return bool
      */
-    protected function checkAdmin(){
+    protected function checkAdmin()
+    {
         return $this->getSecurityContext()->hasAdminUser();
     }
 
@@ -185,8 +185,8 @@ class FeedController extends BaseFrontController {
     private function checkId($context, $id)
     {
         $ret = false;
-        if (is_numeric($id)){
-            if ("catalog" === $context){
+        if (is_numeric($id)) {
+            if ("catalog" === $context) {
                 $cat = CategoryQuery::create()->findPk($id);
                 $ret = (null !== $cat && $cat->getVisible());
             } elseif ("brand" === $context) {

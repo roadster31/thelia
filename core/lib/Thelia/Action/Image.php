@@ -180,7 +180,6 @@ class Image extends BaseCachedFile implements EventSubscriberInterface
                         $params = explode(':', $effect);
 
                         switch ($params[0]) {
-
                             case 'greyscale':
                             case 'grayscale':
                                 $image->effects()->grayscale();

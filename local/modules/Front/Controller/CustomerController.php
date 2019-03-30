@@ -1,7 +1,7 @@
 <?php
 /*************************************************************************************/
 /*                                                                                   */
-/*      Thelia	                                                                     */
+/*      Thelia                                                                       */
 /*                                                                                   */
 /*      Copyright (c) OpenStudio                                                     */
 /*      email : info@thelia.net                                                      */
@@ -17,7 +17,7 @@
 /*      GNU General Public License for more details.                                 */
 /*                                                                                   */
 /*      You should have received a copy of the GNU General Public License            */
-/*	    along with this program. If not, see <http://www.gnu.org/licenses/>.         */
+/*      along with this program. If not, see <http://www.gnu.org/licenses/>.         */
 /*                                                                                   */
 /*************************************************************************************/
 namespace Front\Controller;
@@ -96,7 +96,6 @@ class CustomerController extends BaseFrontController
                 $this->dispatch(TheliaEvents::LOST_PASSWORD, $event);
 
                 return $this->generateSuccessRedirect($passwordLost);
-
             } catch (FormValidationException $e) {
                 $message = $this->getTranslator()->trans(
                     "Please check your input: %s",
@@ -284,7 +283,6 @@ class CustomerController extends BaseFrontController
                 $this->dispatch(TheliaEvents::CUSTOMER_UPDATEPROFILE, $customerChangeEvent);
 
                 return $this->generateSuccessRedirect($customerPasswordUpdateForm);
-
             } catch (FormValidationException $e) {
                 $message = $this->getTranslator()->trans(
                     "Please check your input: %s",
@@ -376,7 +374,6 @@ class CustomerController extends BaseFrontController
                 $this->processLogin($updatedCustomer);
 
                 return $this->generateSuccessRedirect($customerProfileUpdateForm);
-
             } catch (FormValidationException $e) {
                 $message = $this->getTranslator()->trans(
                     "Please check your input: %s",
@@ -453,7 +450,6 @@ class CustomerController extends BaseFrontController
                         }
 
                         return $this->generateSuccessRedirect($customerLoginForm);
-
                     } catch (UsernameNotFoundException $e) {
                         $message = $this->getTranslator()->trans(
                             "Wrong email or password. Please try again",
@@ -486,7 +482,6 @@ class CustomerController extends BaseFrontController
                             Front::MESSAGE_DOMAIN
                         );
                     }
-
                 }
             } catch (FormValidationException $e) {
                 $message = $this->getTranslator()->trans(

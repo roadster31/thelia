@@ -1,10 +1,10 @@
 <?php
 /*************************************************************************************/
 /*                                                                                   */
-/*      Thelia	                                                                     */
+/*      Thelia                                                                       */
 /*                                                                                   */
 /*      Copyright (c) OpenStudio                                                     */
-/*	    email : info@thelia.net                                                      */
+/*      email : info@thelia.net                                                      */
 /*      web : http://www.thelia.net                                                  */
 /*                                                                                   */
 /*      This program is free software; you can redistribute it and/or modify         */
@@ -17,7 +17,7 @@
 /*      GNU General Public License for more details.                                 */
 /*                                                                                   */
 /*      You should have received a copy of the GNU General Public License            */
-/*	    along with this program. If not, see <http://www.gnu.org/licenses/>.         */
+/*      along with this program. If not, see <http://www.gnu.org/licenses/>.         */
 /*                                                                                   */
 /*************************************************************************************/
 namespace Front\Controller;
@@ -204,7 +204,6 @@ class OrderController extends BaseFrontController
             $this->getDispatcher()->dispatch(TheliaEvents::ORDER_SET_POSTAGE, $orderEvent);
 
             return $this->generateRedirectFromRoute("order.invoice");
-
         } catch (FormValidationException $e) {
             $message = $this->getTranslator()->trans(
                 "Please check your input: %s",
@@ -275,7 +274,6 @@ class OrderController extends BaseFrontController
             $this->getDispatcher()->dispatch(TheliaEvents::ORDER_SET_PAYMENT_MODULE, $orderEvent);
 
             return $this->generateRedirectFromRoute("order.payment.process");
-
         } catch (FormValidationException $e) {
             $message = $this->getTranslator()->trans(
                 "Please check your input: %s",
@@ -495,7 +493,6 @@ class OrderController extends BaseFrontController
         }
 
         throw new AccessDeniedHttpException();
-
     }
 
     private function checkOrderCustomer($order_id)
@@ -553,6 +550,7 @@ class OrderController extends BaseFrontController
      * Redirect to cart view if at least one non product is out of stock
      *
      * @return null|BaseResponse
+     * @throws PropelException
      */
     private function checkStockNotEmpty()
     {

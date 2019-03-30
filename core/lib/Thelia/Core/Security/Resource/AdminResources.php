@@ -170,17 +170,21 @@ class AdminResources
             if (isset($this->resources[$module][$constantName])) {
                 return $this->resources[$module][$constantName];
             } else {
-                throw new ResourceException(sprintf('Resource `%s` not found', $module),
-                    ResourceException::RESOURCE_NOT_FOUND);
+                throw new ResourceException(
+                    sprintf('Resource `%s` not found', $module),
+                    ResourceException::RESOURCE_NOT_FOUND
+                );
             }
         } else {
-            throw new ResourceException(sprintf('Module `%s` not found', $module),
-                ResourceException::RESOURCE_NOT_FOUND);
+            throw new ResourceException(
+                sprintf('Module `%s` not found', $module),
+                ResourceException::RESOURCE_NOT_FOUND
+            );
         }
     }
 
     /**
-     * @param $data with format
+     * @param string|array $data with format
      * [
      *     "ADDRESS" => "admin.address",
      *     ...
