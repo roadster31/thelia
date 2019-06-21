@@ -1,10 +1,10 @@
 <?php
 /*************************************************************************************/
 /*                                                                                   */
-/*      Thelia	                                                                     */
+/*      Thelia                                                                       */
 /*                                                                                   */
 /*      Copyright (c) OpenStudio                                                     */
-/*	    email : info@thelia.net                                                      */
+/*        email : info@thelia.net                                                    */
 /*      web : http://www.thelia.net                                                  */
 /*                                                                                   */
 /*      This program is free software; you can redistribute it and/or modify         */
@@ -17,7 +17,7 @@
 /*      GNU General Public License for more details.                                 */
 /*                                                                                   */
 /*      You should have received a copy of the GNU General Public License            */
-/*	    along with this program. If not, see <http://www.gnu.org/licenses/>.         */
+/*        along with this program. If not, see <http://www.gnu.org/licenses/>.       */
 /*                                                                                   */
 /*************************************************************************************/
 namespace Front\Controller;
@@ -33,11 +33,9 @@ use Thelia\Core\Event\Order\OrderEvent;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Form\CartAdd;
 use Thelia\Form\Definition\FrontForm;
-use Thelia\Form\Exception\FormValidationException;
 use Thelia\Log\Tlog;
 use Thelia\Model\AddressQuery;
 use Thelia\Model\ConfigQuery;
-use Thelia\Module\Exception\DeliveryException;
 use Thelia\Tools\URL;
 
 class CartController extends BaseFrontController
@@ -73,7 +71,7 @@ class CartController extends BaseFrontController
                 [],
                 Front::MESSAGE_DOMAIN
             );
-        } catch (FormValidationException $e) {
+        } catch (\Exception $e) {
             $message = $e->getMessage();
         }
 
@@ -81,6 +79,8 @@ class CartController extends BaseFrontController
             $cartAdd->setErrorMessage($message);
             $this->getParserContext()->addForm($cartAdd);
         }
+
+        return null;
     }
 
     public function changeItem()
@@ -135,6 +135,8 @@ class CartController extends BaseFrontController
 
             return $response;
         }
+
+        return null;
     }
 
     protected function changeViewForAjax()
