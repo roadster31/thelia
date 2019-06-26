@@ -26,6 +26,7 @@ use Front\Front;
 use Propel\Runtime\Exception\PropelException;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Thelia\Controller\Front\BaseFrontController;
 use Thelia\Core\Event\Cart\CartEvent;
 use Thelia\Core\Event\Delivery\DeliveryPostageEvent;
@@ -78,6 +79,18 @@ class CartController extends BaseFrontController
         if ($message) {
             $cartAdd->setErrorMessage($message);
             $this->getParserContext()->addForm($cartAdd);
+
+            if ($this->getRequest()->isXmlHttpRequest()) {
+                return new Response(
+                    $this->renderRaw(
+                        "includes/add-to-cart-error",
+                        [ 'errorMessage' => $message]
+                    ),
+                    500
+                );
+            } else if (null !== $response = $this->generateErrorRedirect($cartAdd)) {
+                return $response;
+            }
         }
 
         return null;
